@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>헤일리 썸머스쿨</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --line:#e4e7eb; --line2:#eef0f3;
+    --text:#1f2328; --muted:#6b7280; --faint:#9aa1ab;
+    --accent:#2563eb; --accent-bg:#e9f0fe; --accent-line:#c3d7fb;
+    --danger:#d92d20; --danger-bg:#fdeceb;
+    --chip:#eef0f3; --ok:#0f7a4d;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+    background:var(--bg); color:var(--text); font-size:16px; line-height:1.5;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:960px; margin:0 auto; padding:0 12px 80px}
+  button{font-family:inherit; cursor:pointer}
+  input,select{font-family:inherit; font-size:15px}
+  a{color:var(--accent)}
+
+  /* header */
+  header{position:sticky; top:0; z-index:20; background:var(--bg); padding-top:10px}
+  .bar{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+  .brand{font-size:18px; font-weight:700}
+  .brand small{font-weight:500; color:var(--muted); font-size:13px; margin-left:6px}
+  .tabs{display:flex; gap:4px; margin:10px 0 6px; overflow-x:auto; -webkit-overflow-scrolling:touch}
+  .tabs button{
+    flex:0 0 auto; border:1px solid var(--line); background:var(--card); color:var(--muted);
+    padding:8px 14px; border-radius:999px; font-size:14px; font-weight:600; white-space:nowrap;
+  }
+  .tabs button.on{background:var(--accent); border-color:var(--accent); color:#fff}
+
+  /* generic */
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px}
+  .row{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .spread{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+  .muted{color:var(--muted)} .faint{color:var(--faint)}
+  .sec-title{font-size:15px; font-weight:700; margin:18px 2px 8px}
+  .hint{font-size:13px; color:var(--muted)}
+  .btn{border:1px solid var(--line); background:var(--card); color:var(--text); padding:8px 12px; border-radius:10px; font-size:14px; font-weight:600}
+  .btn:hover{background:#f8f9fb}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  .btn.sm{padding:6px 10px; font-size:13px}
+  .btn.danger{color:var(--danger); border-color:#f2c9c6}
+  .btn.danger:hover{background:var(--danger-bg)}
+  input[type=time],input[type=date],input[type=text],select{
+    border:1px solid var(--line); border-radius:9px; padding:8px 10px; background:#fff; color:var(--text); min-height:38px;
+  }
+  input:focus,select:focus{outline:2px solid var(--accent-line); outline-offset:0; border-color:var(--accent)}
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  th,td{padding:8px 8px; border-bottom:1px solid var(--line2); text-align:left; vertical-align:middle}
+  th{color:var(--muted); font-weight:600; font-size:13px}
+
+  .badge{display:inline-block; padding:2px 9px; border-radius:999px; font-size:12px; font-weight:700; background:var(--chip); color:#41474f}
+  .badge.red{background:var(--danger-bg); color:var(--danger)}
+  .badge.blue{background:var(--accent-bg); color:var(--accent)}
+  .txt-red{color:var(--danger); font-weight:700}
+  .txt-ok{color:var(--ok); font-weight:600}
+
+  /* summary chips */
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0}
+  .chip{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:13px; font-weight:600; color:var(--muted)}
+  .chip b{color:var(--text); font-size:15px; margin-left:4px}
+  .chip.warn b{color:var(--danger)}
+
+  /* date nav */
+  .datenav{display:flex; align-items:center; gap:8px}
+  .datenav .d{font-weight:700; font-size:15px}
+
+  /* student cards */
+  .stu{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px}
+  .stu.dim{opacity:.7}
+  .stu .top{display:flex; align-items:baseline; gap:8px; margin-bottom:8px}
+  .stu .name{font-weight:700}
+  .stu .meta{font-size:12px; color:var(--faint)}
+  .line{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:4px 0}
+  .lbl{font-size:13px; color:var(--muted); min-width:44px}
+  .sep{color:var(--line); margin:0 2px}
+  .note{border:1px solid var(--line); border-radius:8px; padding:6px 8px; font-size:13px; width:100%; max-width:280px}
+
+  /* vocab grid */
+  .gridwrap{overflow-x:auto}
+  table.grid th, table.grid td{text-align:center; padding:6px 4px; white-space:nowrap}
+  table.grid td.n{text-align:left; font-weight:600; position:sticky; left:0; background:var(--card)}
+  table.grid th.n{text-align:left; position:sticky; left:0; background:var(--card)}
+  table.grid input[type=checkbox]{width:20px; height:20px}
+  .done-badge{font-size:12px; color:var(--muted)}
+
+  /* login */
+  .login{position:fixed; inset:0; background:rgba(20,22,26,.45); display:flex; align-items:center; justify-content:center; z-index:100}
+  .login .box{background:#fff; border-radius:14px; padding:22px; width:min(90vw,320px); text-align:center}
+  .login h2{margin:0 0 4px; font-size:17px}
+  .login p{margin:0 0 14px; font-size:13px; color:var(--muted)}
+  .login input{width:100%; text-align:center; font-size:20px; letter-spacing:4px; padding:12px}
+  .login .err{color:var(--danger); font-size:13px; min-height:18px; margin-top:8px}
+
+  /* toast */
+  #toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#1f2328; color:#fff; padding:10px 16px; border-radius:10px; font-size:14px; opacity:0; transition:opacity .2s; z-index:200; pointer-events:none}
+  #toast.show{opacity:1}
+
+  .empty{color:var(--muted); font-size:14px; padding:16px 4px}
+  .formgrid{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  .formgrid select,.formgrid input{min-height:38px}
+  @media (max-width:520px){
+    .lbl{min-width:40px}
+    .note{max-width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="bar">
+      <div class="brand">헤일리 썸머스쿨 <small id="serverTime"></small></div>
+      <button class="btn sm" id="lockBtn">잠금</button>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="today" class="on">오늘 현황</button>
+      <button data-tab="outing">외출 관리</button>
+      <button data-tab="vocab">단어장 진도</button>
+      <button data-tab="late">지각 현황</button>
+      <button data-tab="settings">설정 · 명단</button>
+    </nav>
+  </header>
+
+  <main id="view"></main>
+</div>
+
+<div id="toast"></div>
+
+<div class="login" id="login" style="display:none">
+  <div class="box">
+    <h2>썸머스쿨 관리</h2>
+    <p>PIN을 입력하세요</p>
+    <input id="pinInput" type="tel" inputmode="numeric" maxlength="8" placeholder="••••" />
+    <div class="err" id="pinErr"></div>
+    <button class="btn primary" id="pinBtn" style="width:100%; margin-top:10px">들어가기</button>
+  </div>
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbxaUgikrfMsDeSATyZm2AfE8aVjBORZIMgJizIEARrC2fDfDi0sdJ4Erzq-6uD60moH/exec";
+const WD = ['일','월','화','수','목','금','토'];
+
+const state = { pin:'', date:'', students:[] };
+
+/* ---------- API ---------- */
+async function api(action, extra){
+  const body = Object.assign({ action, pin: state.pin }, extra||{});
+  const res = await fetch(API, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if(data && data.error === 'PIN'){ lock('PIN이 올바르지 않습니다'); throw new Error('PIN'); }
+  return data;
+}
+
+/* ---------- helpers ---------- */
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1600); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function addDays(iso,n){ const p=iso.split('-'); const d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function wdOf(iso){ const p=iso.split('-'); return WD[new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay()]; }
+function studentOptions(sel){
+  return '<option value="">학생 선택</option>' + state.students
+    .filter(s=>s.활성여부===true||s.활성여부==='TRUE')
+    .map(s=>`<option value="${esc(s.학생ID)}" ${sel===s.학생ID?'selected':''}>${esc(s.이름)}${s.클래스?' ('+esc(s.클래스)+')':''}</option>`).join('');
+}
+function studentName(id){ const s=state.students.find(x=>String(x.학생ID)===String(id)); return s?s.이름:id; }
+
+/* ---------- login ---------- */
+function lock(msg){
+  localStorage.removeItem('ss_pin'); state.pin='';
+  document.getElementById('pinErr').textContent = msg||'';
+  document.getElementById('login').style.display='flex';
+  document.getElementById('pinInput').focus();
+}
+async function tryPin(pin){
+  state.pin = pin;
+  try{
+    const d = await api('getDashboard', { date: todayISO() });
+    if(d && d.ok){
+      localStorage.setItem('ss_pin', pin);
+      document.getElementById('login').style.display='none';
+      state.date = d.date;
+      const st = await api('getStudents'); state.students = st.students||[];
+      renderTab('today', d);
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+document.getElementById('pinBtn').onclick = async ()=>{
+  const v = document.getElementById('pinInput').value.trim();
+  if(!v) return;
+  const ok = await tryPin(v);
+  if(!ok) document.getElementById('pinErr').textContent='PIN이 올바르지 않습니다';
+};
+document.getElementById('pinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('pinBtn').click(); });
+document.getElementById('lockBtn').onclick = ()=> lock('');
+
+/* ---------- tabs ---------- */
+document.getElementById('tabs').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-tab]'); if(!b) return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on', x===b));
+  renderTab(b.dataset.tab);
+});
+
+async function renderTab(tab, preloaded){
+  const view = document.getElementById('view');
+  view.innerHTML = '<div class="empty">불러오는 중…</div>';
+  try{
+    if(tab==='today') return renderToday(view, preloaded);
+    if(tab==='outing') return renderOuting(view);
+    if(tab==='vocab') return renderVocab(view);
+    if(tab==='late') return renderLate(view);
+    if(tab==='settings') return renderSettings(view);
+  }catch(e){
+    if(e.message!=='PIN') view.innerHTML = '<div class="empty">불러오지 못했습니다. 다시 시도해 주세요.</div>';
+  }
+}
+
+/* ================= 오늘 현황 ================= */
+async function renderToday(view, pre){
+  const d = pre || await api('getDashboard', { date: state.date });
+  state.date = d.date;
+  document.getElementById('serverTime').textContent = '서버 '+d.서버시각;
+
+  const s = d.summary;
+  const thTxt = `오전 기준 ${d.기준.오전||'-'} · 점심후 기준 ${d.기준.점심후||'-'}`;
+  view.innerHTML = '';
+  view.appendChild(el(`
+    <div>
+      <div class="spread">
+        <div class="datenav">
+          <button class="btn sm" id="prev">‹</button>
+          <span class="d">${d.date} (${d.요일})</span>
+          <button class="btn sm" id="next">›</button>
+          <button class="btn sm" id="tdy">오늘</button>
+        </div>
+        <div class="hint">${thTxt}</div>
+      </div>
+      <div class="chips">
+        <span class="chip">등원<b>${s.등원}</b></span>
+        <span class="chip">미등원<b>${s.미등원}</b></span>
+        <span class="chip">외출 중<b>${s.외출중}</b></span>
+        <span class="chip">여행 중<b>${s.여행중}</b></span>
+        <span class="chip warn">지각<b>${s.지각}</b></span>
+      </div>
+      <div id="stuList"></div>
+    </div>`));
+
+  document.getElementById('prev').onclick=()=>{ state.date=addDays(state.date,-1); renderToday(view); };
+  document.getElementById('next').onclick=()=>{ state.date=addDays(state.date,1); renderToday(view); };
+  document.getElementById('tdy').onclick=()=>{ state.date=todayISO(); renderToday(view); };
+
+  const list = document.getElementById('stuList');
+  if(!d.students.length){ list.innerHTML='<div class="empty">활성 학생이 없습니다. 설정·명단에서 추가하세요.</div>'; return; }
+  d.students.forEach(x=> list.appendChild(studentCard(x, d.date)));
+}
+
+function studentCard(x, date){
+  const head = `<div class="top"><span class="name">${esc(x.이름)}</span><span class="meta">${esc(x.번호||'')} · ${esc(x.클래스||'')}</span></div>`;
+
+  if(x.여행중){
+    const c = el(`<div class="stu dim">${head}<div class="line"><span class="badge">여행 중 · ${esc(x.여행사유)}</span><span class="hint">자리 비움 정상</span></div></div>`);
+    return c;
+  }
+
+  // 오전
+  const amLate = x.오전지각 ? '<span class="txt-red">지각</span>' : (x.오전등원시각?'<span class="txt-ok">정상</span>':'');
+  const amLine = `
+    <div class="line">
+      <span class="lbl">오전</span>
+      <input type="time" class="am" value="${esc(x.오전등원시각||'')}" />
+      ${amLate}
+      ${x.오전등원시각?'<button class="btn sm am-clear">지우기</button>':''}
+      ${!x.오전등원시각?'<span class="badge">미등원</span>':''}
+    </div>`;
+
+  // 점심후
+  let pmLine;
+  if(x.점심후등원시각){
+    pmLine = `<div class="line"><span class="lbl">점심후</span>
+      <b>${esc(x.점심후등원시각)}</b>
+      ${x.점심후지각?'<span class="txt-red">지각</span>':'<span class="txt-ok">정상</span>'}
+      <button class="btn sm pm-clear">취소</button></div>`;
+  }else{
+    pmLine = `<div class="line"><span class="lbl">점심후</span>
+      <button class="btn sm primary pm-check">지금 체크</button>
+      <span class="hint">버튼 누른 순간(서버시각) 기록</span></div>`;
+  }
+
+  // 외출
+  let outLine = '';
+  if(x.외출중 && x.현재외출){
+    const o=x.현재외출;
+    outLine = `<div class="line"><span class="lbl">외출</span><span class="badge">외출 중 · ${esc(o.장소||'')} (~${esc(o.종료시각||'')})</span></div>`;
+  }else if(x.외출 && x.외출.length){
+    const t = x.외출.map(o=>`${esc(o.시작시각)}~${esc(o.종료시각)} ${esc(o.장소||'')}`).join(', ');
+    outLine = `<div class="line"><span class="lbl">외출</span><span class="hint">예정 ${t}</span></div>`;
+  }
+
+  // 단어장
+  const doneTxt = `${x.단어장완료수}/14`;
+  const todayTxt = (x.오늘완료Day&&x.오늘완료Day.length)?` · 오늘 ${x.오늘완료Day.map(d=>'DAY'+d).join(', ')}`:'';
+  const nextBtn = x.단어장다음Day
+    ? `<button class="btn sm vocab-next">DAY${x.단어장다음Day} 완료</button>`
+    : '<span class="hint">전부 완료</span>';
+  const vocabLine = `<div class="line"><span class="lbl">단어장</span><span class="done-badge">${doneTxt}${todayTxt}</span>${nextBtn}</div>`;
+
+  const noteLine = `<div class="line"><input class="note" placeholder="비고" value="${esc(x.비고||'')}" /></div>`;
+
+  const card = el(`<div class="stu">${head}${amLine}${pmLine}${outLine}${vocabLine}${noteLine}</div>`);
+
+  // events
+  const am = card.querySelector('.am');
+  if(am) am.addEventListener('change', async ()=>{ await api('setMorning',{date,학생ID:x.학생ID,time:am.value}); toast('오전 등원 저장'); refreshToday(); });
+  const amClear = card.querySelector('.am-clear');
+  if(amClear) amClear.onclick=async()=>{ await api('clearTime',{date,학생ID:x.학생ID,which:'오전'}); toast('삭제됨'); refreshToday(); };
+  const pmCheck = card.querySelector('.pm-check');
+  if(pmCheck) pmCheck.onclick=async()=>{ const r=await api('setLunch',{date,학생ID:x.학생ID}); toast('점심후 등원 '+r.점심후등원시각); refreshToday(); };
+  const pmClear = card.querySelector('.pm-clear');
+  if(pmClear) pmClear.onclick=async()=>{ await api('clearTime',{date,학생ID:x.학생ID,which:'점심후'}); toast('취소됨'); refreshToday(); };
+  const vn = card.querySelector('.vocab-next');
+  if(vn) vn.onclick=async()=>{ await api('setVocab',{학생ID:x.학생ID,day:x.단어장다음Day,checked:true}); toast('DAY'+x.단어장다음Day+' 완료'); refreshToday(); };
+  const note = card.querySelector('.note');
+  if(note) note.addEventListener('change', async ()=>{ await api('setNote',{date,학생ID:x.학생ID,비고:note.value}); toast('비고 저장'); });
+
+  return card;
+}
+function refreshToday(){ renderToday(document.getElementById('view')); }
+
+/* ================= 외출 관리 ================= */
+async function renderOuting(view){
+  const data = await api('getOutings', { date: state.date });
+  view.innerHTML='';
+  // 반복
+  const recRows = (data.반복||[]).map(o=>`
+    <tr><td>${esc(studentName(o.학생ID))}</td><td>${esc(o.요일)}</td>
+    <td>${esc(o.시작시각)}~${esc(o.종료시각)}</td><td>${esc(o.장소||'')}</td>
+    <td>${(o.활성여부===true||o.활성여부==='TRUE')?'사용':'중지'}</td>
+    <td><button class="btn sm danger" data-del-rec="${esc(o.외출ID)}">삭제</button></td></tr>`).join('');
+
+  view.appendChild(el(`
+    <div>
+      <div class="sec-title">요일 반복 외출 <span class="hint">(정해진 요일마다 다른 학원 등)</span></div>
+      <div class="card">
+        <div class="formgrid" style="margin-bottom:10px">
+          <select id="r_sid">${studentOptions()}</select>
+          <select id="r_wd">${WD.map(w=>`<option>${w}</option>`).join('')}</select>
+          <input id="r_start" type="time" /> <span class="muted">~</span> <input id="r_end" type="time" />
+          <input id="r_place" type="text" placeholder="장소(예: 수학학원)" />
+          <button class="btn primary" id="r_add">추가</button>
+        </div>
+        <div class="gridwrap">
+          <table><thead><tr><th>학생</th><th>요일</th><th>시간</th><th>장소</th><th>상태</th><th></th></tr></thead>
+          <tbody>${recRows||'<tr><td colspan="6" class="empty">등록된 반복 외출이 없습니다.</td></tr>'}</tbody></table>
+        </div>
+      </div>
+
+      <div class="sec-title">당일 외출 <span class="hint">(${state.date} 기준, 그날만)</span></div>
+      <div class="card">
+        <div class="formgrid" style="margin-bottom:10px">
+          <input id="o_date" type="date" value="${state.date}" />
+          <select id="o_sid">${studentOptions()}</select>
+          <input id="o_start" type="time" /> <span class="muted">~</span> <input id="o_end" type="time" />
+          <input id="o_place" type="text" placeholder="장소" />
+          <button class="btn primary" id="o_add">추가</button>
+        </div>
+        <div id="oneoffList" class="gridwrap"></div>
+      </div>
+    </div>`));
+
+  const drawOneoff = (rows)=>{
+    const body = (rows||[]).map(o=>`
+      <tr><td>${esc(o.날짜)}</td><td>${esc(studentName(o.학생ID))}</td>
+      <td>${esc(o.시작시각)}~${esc(o.종료시각)}</td><td>${esc(o.장소||'')}</td>
+      <td><button class="btn sm danger" data-del-one="${esc(o.외출ID)}">삭제</button></td></tr>`).join('');
+    document.getElementById('oneoffList').innerHTML =
+      `<table><thead><tr><th>날짜</th><th>학생</th><th>시간</th><th>장소</th><th></th></tr></thead>
+      <tbody>${body||'<tr><td colspan="5" class="empty">등록된 당일 외출이 없습니다.</td></tr>'}</tbody></table>`;
+  };
+  drawOneoff(data.당일);
+
+  document.getElementById('r_add').onclick=async()=>{
+    const sid=document.getElementById('r_sid').value;
+    if(!sid) return toast('학생을 선택하세요');
+    await api('saveRecurringOuting',{학생ID:sid,요일:document.getElementById('r_wd').value,
+      시작시각:document.getElementById('r_start').value,종료시각:document.getElementById('r_end').value,
+      장소:document.getElementById('r_place').value});
+    toast('반복 외출 추가'); renderOuting(view);
+  };
+  document.getElementById('o_add').onclick=async()=>{
+    const sid=document.getElementById('o_sid').value;
+    if(!sid) return toast('학생을 선택하세요');
+    await api('saveOneoffOuting',{날짜:document.getElementById('o_date').value,학생ID:sid,
+      시작시각:document.getElementById('o_start').value,종료시각:document.getElementById('o_end').value,
+      장소:document.getElementById('o_place').value});
+    toast('당일 외출 추가'); renderOuting(view);
+  };
+  view.querySelectorAll('[data-del-rec]').forEach(b=>{
+    b.onclick=async()=>{ await api('deleteRecurringOuting',{id:b.dataset.delRec}); toast('삭제됨'); renderOuting(view); };
+  });
+  document.querySelectorAll('#oneoffList [data-del-one]').forEach(b=>{
+    b.onclick=async()=>{ await api('deleteOneoffOuting',{id:b.dataset.delOne}); toast('삭제됨'); renderOuting(view); };
+  });
+}
+
+/* ================= 단어장 진도 ================= */
+async function renderVocab(view){
+  const data = await api('getVocab');
+  const days = data.days||14;
+  const prog = data.진도||[];
+  const logMap = {}; // sid -> day -> 완료일
+  (data.로그||[]).forEach(l=>{ (logMap[l.학생ID]=logMap[l.학생ID]||{})[l.Day]=l.완료일; });
+
+  const td = data.today || todayISO();
+  const actives = state.students.filter(s=>(s.활성여부===true||s.활성여부==='TRUE') && (!s.시작일||String(s.시작일)<=td));
+  const progMap = {}; prog.forEach(p=> progMap[String(p.학생ID)]=p);
+
+  let head = '<tr><th class="n">학생</th>';
+  for(let i=1;i<=days;i++) head+=`<th>D${i}</th>`;
+  head+='</tr>';
+
+  let rows='';
+  actives.forEach(s=>{
+    const p = progMap[String(s.학생ID)]||{};
+    let done=0; for(let i=1;i<=days;i++) if(p['DAY'+i]===true||p['DAY'+i]==='TRUE') done++;
+    let tds='';
+    for(let i=1;i<=days;i++){
+      const on = (p['DAY'+i]===true||p['DAY'+i]==='TRUE');
+      const dt = (logMap[s.학생ID]||{})[i]||'';
+      tds+=`<td><input type="checkbox" data-sid="${esc(s.학생ID)}" data-day="${i}" ${on?'checked':''} title="${esc(dt)}"></td>`;
+    }
+    rows+=`<tr><td class="n">${esc(s.이름)} <span class="done-badge">${done}/${days}</span></td>${tds}</tr>`;
+  });
+
+  view.innerHTML='';
+  view.appendChild(el(`
+    <div>
+      <div class="sec-title">단어장 진도 <span class="hint">(칸 체크 = 오늘 날짜로 완료 기록. 체크칸에 마우스 올리면 완료일 표시)</span></div>
+      <div class="card gridwrap">
+        <table class="grid"><thead>${head}</thead><tbody>${rows||'<tr><td class="empty">활성 학생이 없습니다.</td></tr>'}</tbody></table>
+      </div>
+    </div>`));
+
+  view.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      try{
+        await api('setVocab',{학생ID:cb.dataset.sid,day:+cb.dataset.day,checked:cb.checked});
+        toast(cb.checked?('DAY'+cb.dataset.day+' 완료'):'해제됨');
+      }catch(e){ cb.checked=!cb.checked; }
+    });
+  });
+}
+
+/* ================= 지각 현황 ================= */
+async function renderLate(view){
+  const to = state.date || todayISO();
+  const from = addDays(to,-13);
+  view.innerHTML='';
+  view.appendChild(el(`
+    <div>
+      <div class="sec-title">지각 현황 <span class="hint">(오전·점심후 지각 합산, 여행 기간 제외)</span></div>
+      <div class="card">
+        <div class="formgrid">
+          <span class="lbl">기간</span>
+          <input id="l_from" type="date" value="${from}" /> <span class="muted">~</span> <input id="l_to" type="date" value="${to}" />
+          <button class="btn primary" id="l_go">조회</button>
+        </div>
+      </div>
+      <div id="lateResult"></div>
+    </div>`));
+
+  const run = async ()=>{
+    const box = document.getElementById('lateResult');
+    box.innerHTML='<div class="empty">집계 중…</div>';
+    const r = await api('getLateReport',{from:document.getElementById('l_from').value,to:document.getElementById('l_to').value});
+    const totalRows = (r.totals||[]).map(t=>`
+      <tr><td>${esc(t.이름)}</td><td>${esc(t.클래스||'')}</td>
+      <td>${t.오전지각}</td><td>${t.점심후지각}</td>
+      <td><b class="${t.지각합계>0?'txt-red':''}">${t.지각합계}</b></td>
+      <td class="muted">${t.미등원}</td></tr>`).join('');
+    const detailRows = (r.detail||[]).map(d=>`
+      <tr><td>${esc(d.날짜)}</td><td>${esc(d.이름)}</td>
+      <td>${d.오전지각?`<span class="txt-red">${esc(d.오전등원시각)}</span>`:esc(d.오전등원시각||'-')}</td>
+      <td>${d.점심후지각?`<span class="txt-red">${esc(d.점심후등원시각)}</span>`:esc(d.점심후등원시각||'-')}</td></tr>`).join('');
+    box.innerHTML=`
+      <div class="sec-title">학생별 합계 <span class="hint">(지각합계 = 환급 차감 기준 횟수)</span></div>
+      <div class="card gridwrap"><table>
+        <thead><tr><th>학생</th><th>클래스</th><th>오전지각</th><th>점심후지각</th><th>지각합계</th><th>미등원</th></tr></thead>
+        <tbody>${totalRows||'<tr><td colspan="6" class="empty">해당 기간 지각 없음</td></tr>'}</tbody></table></div>
+      <div class="sec-title">날짜별 상세</div>
+      <div class="card gridwrap"><table>
+        <thead><tr><th>날짜</th><th>학생</th><th>오전</th><th>점심후</th></tr></thead>
+        <tbody>${detailRows||'<tr><td colspan="4" class="empty">상세 내역 없음</td></tr>'}</tbody></table></div>`;
+  };
+  document.getElementById('l_go').onclick=run;
+  run();
+}
+
+/* ================= 설정 · 명단 ================= */
+async function renderSettings(view){
+  const [set, stu] = await Promise.all([api('getSettings'), api('getStudents')]);
+  state.students = stu.students||[];
+  const order=['전역','월','화','수','목','금','토','일'];
+  const map={}; (set.settings||[]).forEach(r=> map[r.구분]=r);
+
+  const trs = order.map(k=>{
+    const r=map[k]||{};
+    return `<tr><td><b>${k}</b></td>
+      <td><input type="time" data-set="${k}" data-col="오전기준" value="${esc(r.오전기준||'')}"></td>
+      <td><input type="time" data-set="${k}" data-col="점심후기준" value="${esc(r.점심후기준||'')}"></td></tr>`;
+  }).join('');
+
+  const stuRows = state.students.map(s=>{
+    const active = (s.활성여부===true||s.활성여부==='TRUE');
+    return `<tr>
+      <td>${esc(s.이름)}</td>
+      <td><input type="text" style="width:90px" data-sid="${esc(s.학생ID)}" data-f="번호" value="${esc(s.번호||'')}"></td>
+      <td><input type="text" style="width:90px" data-sid="${esc(s.학생ID)}" data-f="클래스" value="${esc(s.클래스||'')}"></td>
+      <td><input type="date" data-sid="${esc(s.학생ID)}" data-f="시작일" value="${esc(s.시작일||'')}"></td>
+      <td>${active?'<span class="badge blue">활성</span>':'<span class="badge">비활성</span>'}</td>
+      <td>
+        <button class="btn sm" data-savestu="${esc(s.학생ID)}">저장</button>
+        <button class="btn sm" data-toggle="${esc(s.학생ID)}" data-active="${active?1:0}">${active?'비활성화':'활성화'}</button>
+      </td></tr>`;
+  }).join('');
+
+  view.innerHTML='';
+  view.appendChild(el(`
+    <div>
+      <div class="sec-title">기준 시각 <span class="hint">(요일 칸이 비면 전역값 사용. 이 시각을 넘겨 등원하면 지각)</span></div>
+      <div class="card gridwrap">
+        <table><thead><tr><th>구분</th><th>오전 기준</th><th>점심후 기준</th></tr></thead><tbody>${trs}</tbody></table>
+        <div style="margin-top:10px"><button class="btn primary" id="saveSet">기준 시각 저장</button></div>
+      </div>
+
+      <div class="sec-title">학생 명단</div>
+      <div class="card">
+        <div class="formgrid" style="margin-bottom:10px">
+          <input id="ns_name" type="text" placeholder="이름" />
+          <input id="ns_num" type="text" placeholder="번호" style="width:110px" />
+          <input id="ns_class" type="text" placeholder="클래스" style="width:110px" />
+          <input id="ns_start" type="date" title="참여 시작일 (비우면 즉시 참여)" />
+          <button class="btn primary" id="addStu">학생 추가</button>
+        </div>
+        <div class="gridwrap"><table>
+          <thead><tr><th>이름</th><th>번호</th><th>클래스</th><th>참여 시작</th><th>상태</th><th></th></tr></thead>
+          <tbody>${stuRows||'<tr><td colspan="5" class="empty">등록된 학생이 없습니다.</td></tr>'}</tbody></table></div>
+      </div>
+    </div>`));
+
+  document.getElementById('saveSet').onclick=async()=>{
+    const rows = order.map(k=>{
+      const am=view.querySelector(`input[data-set="${k}"][data-col="오전기준"]`).value;
+      const pm=view.querySelector(`input[data-set="${k}"][data-col="점심후기준"]`).value;
+      return {구분:k, 오전기준:am, 점심후기준:pm};
+    });
+    await api('saveSettings',{settings:rows}); toast('기준 시각 저장');
+  };
+  document.getElementById('addStu').onclick=async()=>{
+    const name=document.getElementById('ns_name').value.trim();
+    if(!name) return toast('이름을 입력하세요');
+    await api('saveStudent',{이름:name,번호:document.getElementById('ns_num').value,클래스:document.getElementById('ns_class').value,시작일:document.getElementById('ns_start').value});
+    toast('학생 추가'); const st=await api('getStudents'); state.students=st.students||[]; renderSettings(view);
+  };
+  view.querySelectorAll('[data-savestu]').forEach(btn=>{
+    btn.onclick=async()=>{
+      const id=btn.dataset.savestu;
+      const num=view.querySelector(`input[data-sid="${id}"][data-f="번호"]`).value;
+      const cls=view.querySelector(`input[data-sid="${id}"][data-f="클래스"]`).value;
+      const st=view.querySelector(`input[data-sid="${id}"][data-f="시작일"]`).value;
+      const s=state.students.find(x=>String(x.학생ID)===String(id));
+      await api('saveStudent',{학생ID:id,이름:s.이름,번호:num,클래스:cls,시작일:st});
+      toast('저장됨');
+      const stx=await api('getStudents'); state.students=stx.students||[];
+    };
+  });
+  view.querySelectorAll('[data-toggle]').forEach(btn=>{
+    btn.onclick=async()=>{
+      const id=btn.dataset.toggle; const to=btn.dataset.active==='1'?false:true;
+      await api('setStudentActive',{학생ID:id,활성:to}); toast(to?'활성화':'비활성화');
+      const st=await api('getStudents'); state.students=st.students||[]; renderSettings(view);
+    };
+  });
+}
+
+/* ---------- boot ---------- */
+(function(){
+  state.date = todayISO();
+  const saved = localStorage.getItem('ss_pin');
+  if(saved){ tryPin(saved).then(ok=>{ if(!ok) lock(''); }); }
+  else lock('');
+})();
+</script>
+</body>
+</html>
