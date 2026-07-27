@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<link rel="icon" href="data:," />
 <title>헤일리 썸머스쿨</title>
 <style>
   :root{
@@ -123,7 +124,7 @@
     </div>
     <nav class="tabs" id="tabs">
       <button data-tab="today" class="on">오늘 현황</button>
-      <button data-tab="outing">외출 관리</button>
+      <button data-tab="outing">외출·여행</button>
       <button data-tab="vocab">단어장 진도</button>
       <button data-tab="late">지각 현황</button>
       <button data-tab="settings">설정 · 명단</button>
@@ -343,7 +344,7 @@ function refreshToday(){ renderToday(document.getElementById('view')); }
 
 /* ================= 외출 관리 ================= */
 async function renderOuting(view){
-  const data = await api('getOutings', { date: state.date });
+  const [data, tv] = await Promise.all([api('getOutings', { date: state.date }), api('getTravel')]);
   view.innerHTML='';
   // 반복
   const recRows = (data.반복||[]).map(o=>`
@@ -380,7 +381,29 @@ async function renderOuting(view){
         </div>
         <div id="oneoffList" class="gridwrap"></div>
       </div>
+
+      <div class="sec-title">여행 기록 <span class="hint">(가족여행 등 며칠씩 빠지는 경우. 이 기간엔 "여행 중"으로 표시되고 지각·미등원 집계에서 제외됩니다)</span></div>
+      <div class="card">
+        <div class="formgrid" style="margin-bottom:10px">
+          <select id="t_sid">${studentOptions()}</select>
+          <input id="t_start" type="date" title="시작일" /> <span class="muted">~</span> <input id="t_end" type="date" title="종료일" />
+          <input id="t_reason" type="text" placeholder="사유(예: 가족여행)" />
+          <button class="btn primary" id="t_add">추가</button>
+        </div>
+        <div id="travelList" class="gridwrap"></div>
+      </div>
     </div>`));
+
+  const drawTravel = (rows)=>{
+    const body = (rows||[]).map(t=>`
+      <tr><td>${esc(studentName(t.학생ID))}</td>
+      <td>${esc(t.시작일)} ~ ${esc(t.종료일)}</td><td>${esc(t.사유||'')}</td>
+      <td><button class="btn sm danger" data-del-travel="${esc(t.여행ID)}">삭제</button></td></tr>`).join('');
+    document.getElementById('travelList').innerHTML =
+      `<table><thead><tr><th>학생</th><th>기간</th><th>사유</th><th></th></tr></thead>
+      <tbody>${body||'<tr><td colspan="4" class="empty">등록된 여행 기록이 없습니다.</td></tr>'}</tbody></table>`;
+  };
+  drawTravel(tv.travel);
 
   const drawOneoff = (rows)=>{
     const body = (rows||[]).map(o=>`
@@ -409,11 +432,23 @@ async function renderOuting(view){
       장소:document.getElementById('o_place').value});
     toast('당일 외출 추가'); renderOuting(view);
   };
+  document.getElementById('t_add').onclick=async()=>{
+    const sid=document.getElementById('t_sid').value;
+    const s=document.getElementById('t_start').value, e=document.getElementById('t_end').value;
+    if(!sid) return toast('학생을 선택하세요');
+    if(!s||!e) return toast('시작일·종료일을 넣으세요');
+    if(e<s) return toast('종료일이 시작일보다 빠릅니다');
+    await api('saveTravel',{학생ID:sid,시작일:s,종료일:e,사유:document.getElementById('t_reason').value});
+    toast('여행 기록 추가'); renderOuting(view);
+  };
   view.querySelectorAll('[data-del-rec]').forEach(b=>{
     b.onclick=async()=>{ await api('deleteRecurringOuting',{id:b.dataset.delRec}); toast('삭제됨'); renderOuting(view); };
   });
   document.querySelectorAll('#oneoffList [data-del-one]').forEach(b=>{
     b.onclick=async()=>{ await api('deleteOneoffOuting',{id:b.dataset.delOne}); toast('삭제됨'); renderOuting(view); };
+  });
+  document.querySelectorAll('#travelList [data-del-travel]').forEach(b=>{
+    b.onclick=async()=>{ await api('deleteTravel',{id:b.dataset.delTravel}); toast('삭제됨'); renderOuting(view); };
   });
 }
 
@@ -583,9 +618,12 @@ async function renderSettings(view){
       const cls=view.querySelector(`input[data-sid="${id}"][data-f="클래스"]`).value;
       const st=view.querySelector(`input[data-sid="${id}"][data-f="시작일"]`).value;
       const s=state.students.find(x=>String(x.학생ID)===String(id));
-      await api('saveStudent',{학생ID:id,이름:s.이름,번호:num,클래스:cls,시작일:st});
-      toast('저장됨');
-      const stx=await api('getStudents'); state.students=stx.students||[];
+      try{
+        await api('saveStudent',{학생ID:id,이름:s.이름,번호:num,클래스:cls,시작일:st});
+        const stx=await api('getStudents'); state.students=stx.students||[];
+        const orig=btn.textContent; btn.textContent='저장됨'; btn.classList.add('primary');
+        setTimeout(()=>{ btn.textContent=orig; btn.classList.remove('primary'); }, 1200);
+      }catch(e){ toast('저장 실패 — 콘솔(F12) 확인'); }
     };
   });
   view.querySelectorAll('[data-toggle]').forEach(btn=>{
