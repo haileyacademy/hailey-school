@@ -170,6 +170,15 @@ function el(html){ const t=document.createElement('template'); t.innerHTML=html.
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1600); }
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function normHM(s){
+  s=String(s||'').trim();
+  if(!s) return '';
+  if(/^\d{1,2}:\d{1,2}$/.test(s)){ const[h,m]=s.split(':'); return ('0'+h).slice(-2)+':'+('0'+m).slice(-2); }
+  const d=s.replace(/\D/g,'');
+  if(d.length===3) return '0'+d[0]+':'+d.slice(1);
+  if(d.length===4) return d.slice(0,2)+':'+d.slice(2);
+  return s;
+}
 function addDays(iso,n){ const p=iso.split('-'); const d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
 function wdOf(iso){ const p=iso.split('-'); return WD[new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay()]; }
 function studentOptions(sel){
@@ -283,7 +292,7 @@ function studentCard(x, date){
   const amLine = `
     <div class="line">
       <span class="lbl">오전</span>
-      <input type="time" class="am" value="${esc(x.오전등원시각||'')}" />
+      <input type="text" inputmode="numeric" maxlength="5" class="am" placeholder="09:38" value="${esc(x.오전등원시각||'')}" style="width:88px; text-align:center" />
       ${amLate}
       ${x.오전등원시각?'<button class="btn sm am-clear">지우기</button>':''}
       ${!x.오전등원시각?'<span class="badge">미등원</span>':''}
@@ -326,7 +335,12 @@ function studentCard(x, date){
 
   // events
   const am = card.querySelector('.am');
-  if(am) am.addEventListener('change', async ()=>{ await api('setMorning',{date,학생ID:x.학생ID,time:am.value}); toast('오전 등원 저장'); refreshToday(); });
+  if(am) am.addEventListener('change', async ()=>{
+    const t = normHM(am.value);
+    if(t && !/^([01]\d|2[0-3]):[0-5]\d$/.test(t)){ toast('시간 형식 확인 (예: 09:38)'); return; }
+    am.value = t;
+    await api('setMorning',{date,학생ID:x.학생ID,time:t}); toast('오전 등원 저장'); refreshToday();
+  });
   const amClear = card.querySelector('.am-clear');
   if(amClear) amClear.onclick=async()=>{ await api('clearTime',{date,학생ID:x.학생ID,which:'오전'}); toast('삭제됨'); refreshToday(); };
   const pmCheck = card.querySelector('.pm-check');
