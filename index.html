@@ -652,6 +652,15 @@ async function renderSettings(view){
         <div style="margin-top:10px"><button class="btn primary" id="saveSet">기준 시각 저장</button></div>
       </div>
 
+      <div class="sec-title">단어장 일수 <span class="hint">(이 학기 단어장 Day 수. 늘리면 진도표 칸이 자동으로 늘어납니다)</span></div>
+      <div class="card">
+        <div class="formgrid">
+          <span class="lbl" style="min-width:auto">Day 수</span>
+          <input id="vd_num" type="number" min="1" max="40" value="${set.vocabDays||14}" style="width:80px" />
+          <button class="btn primary" id="saveVd">저장</button>
+        </div>
+      </div>
+
       <div class="sec-title">학생 명단</div>
       <div class="card">
         <div class="formgrid" style="margin-bottom:10px">
@@ -674,6 +683,10 @@ async function renderSettings(view){
       return {구분:k, 오전기준:am, 점심후기준:pm};
     });
     await api('saveSettings',{settings:rows}); toast('기준 시각 저장');
+  };
+  document.getElementById('saveVd').onclick=async()=>{
+    const n=+document.getElementById('vd_num').value||14;
+    await api('setVocabDays',{days:n}); toast('단어장 일수 저장 ('+n+'일)');
   };
   document.getElementById('addStu').onclick=async()=>{
     const name=document.getElementById('ns_name').value.trim();
