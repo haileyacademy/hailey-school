@@ -119,8 +119,12 @@
 <div class="wrap">
   <header>
     <div class="bar">
-      <div class="brand">헤일리 썸머스쿨 <small id="serverTime"></small></div>
-      <button class="btn sm" id="lockBtn">잠금</button>
+      <div class="brand">헤일리 <span id="termName">썸머</span>스쿨 <small id="serverTime"></small></div>
+      <div class="row" style="gap:6px">
+        <button class="btn sm" id="termBtn" title="학기 전환">학기 전환</button>
+        <button class="btn sm" id="refreshBtn" title="새로고침">↻ 새로고침</button>
+        <button class="btn sm" id="lockBtn">잠금</button>
+      </div>
     </div>
     <nav class="tabs" id="tabs">
       <button data-tab="today" class="on">오늘 현황</button>
@@ -150,7 +154,7 @@
 const API = "https://script.google.com/macros/s/AKfycbxaUgikrfMsDeSATyZm2AfE8aVjBORZIMgJizIEARrC2fDfDi0sdJ4Erzq-6uD60moH/exec";
 const WD = ['일','월','화','수','목','금','토'];
 
-const state = { pin:'', date:'', students:[] };
+const state = { pin:'', date:'', students:[], term:'썸머', tab:'today' };
 
 /* ---------- API ---------- */
 async function api(action, extra){
@@ -218,6 +222,21 @@ document.getElementById('pinBtn').onclick = async ()=>{
 };
 document.getElementById('pinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('pinBtn').click(); });
 document.getElementById('lockBtn').onclick = ()=> lock('');
+document.getElementById('refreshBtn').onclick = ()=> renderTab(state.tab||'today');
+document.getElementById('termBtn').onclick = async ()=>{
+  const to = (state.term==='윈터') ? '썸머' : '윈터';
+  if(!confirm(to+'스쿨로 전환할까요? (데이터가 '+to+'용으로 바뀝니다)')) return;
+  const r = await api('setTerm',{term:to});
+  state.term = r.term; setTermLabel();
+  const st = await api('getStudents'); state.students = st.students||[];
+  state.date = todayISO();
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on', x.dataset.tab==='today'));
+  renderTab('today');
+};
+function setTermLabel(){
+  document.getElementById('termName').textContent = state.term||'썸머';
+  document.getElementById('termBtn').textContent = (state.term==='윈터'?'썸머':'윈터')+'로 전환';
+}
 
 /* ---------- tabs ---------- */
 document.getElementById('tabs').addEventListener('click', e=>{
@@ -227,6 +246,7 @@ document.getElementById('tabs').addEventListener('click', e=>{
 });
 
 async function renderTab(tab, preloaded){
+  state.tab = tab;
   const view = document.getElementById('view');
   view.innerHTML = '<div class="empty">불러오는 중…</div>';
   try{
@@ -244,6 +264,7 @@ async function renderTab(tab, preloaded){
 async function renderToday(view, pre){
   const d = pre || await api('getDashboard', { date: state.date });
   state.date = d.date;
+  if(d.term){ state.term = d.term; setTermLabel(); }
   document.getElementById('serverTime').textContent = '서버 '+d.서버시각;
 
   const s = d.summary;
@@ -384,7 +405,7 @@ async function renderOuting(view){
         </div>
       </div>
 
-      <div class="sec-title">당일 외출 <span class="hint">(${state.date} 기준, 그날만)</span></div>
+      <div class="sec-title">당일 외출 <span class="hint">(특정 날짜만. 오늘 이후 예정분이 모두 보이고, 날짜가 지나면 자동으로 사라집니다)</span></div>
       <div class="card">
         <div class="formgrid" style="margin-bottom:10px">
           <input id="o_date" type="date" value="${state.date}" />
@@ -526,16 +547,25 @@ async function renderLate(view){
         <div class="formgrid">
           <span class="lbl">기간</span>
           <input id="l_from" type="date" value="${from}" /> <span class="muted">~</span> <input id="l_to" type="date" value="${to}" />
+          <span class="lbl" style="min-width:auto">유예</span>
+          <input id="l_grace" type="number" min="0" max="60" value="5" style="width:64px" /> <span class="muted">분</span>
           <button class="btn primary" id="l_go">조회</button>
+          <button class="btn" id="l_copy">보고용 복사</button>
         </div>
+        <div class="hint" style="margin-top:6px">유예 5분이면 기준시각+5분을 넘겨야 지각으로 셉니다. 상세엔 정확한 등원 시각이 남습니다.</div>
       </div>
       <div id="lateResult"></div>
     </div>`));
 
+  let last = { detail:[], totals:[], from, to, grace:5 };
+
   const run = async ()=>{
     const box = document.getElementById('lateResult');
     box.innerHTML='<div class="empty">집계 중…</div>';
-    const r = await api('getLateReport',{from:document.getElementById('l_from').value,to:document.getElementById('l_to').value});
+    const from=document.getElementById('l_from').value, to=document.getElementById('l_to').value;
+    const grace=+document.getElementById('l_grace').value||0;
+    const r = await api('getLateReport',{from,to,grace});
+    last = { detail:r.detail||[], totals:r.totals||[], from, to, grace };
     const totalRows = (r.totals||[]).map(t=>`
       <tr><td>${esc(t.이름)}</td><td>${esc(t.클래스||'')}</td>
       <td>${t.오전지각}</td><td>${t.점심후지각}</td>
@@ -546,7 +576,7 @@ async function renderLate(view){
       <td>${d.오전지각?`<span class="txt-red">${esc(d.오전등원시각)}</span>`:esc(d.오전등원시각||'-')}</td>
       <td>${d.점심후지각?`<span class="txt-red">${esc(d.점심후등원시각)}</span>`:esc(d.점심후등원시각||'-')}</td></tr>`).join('');
     box.innerHTML=`
-      <div class="sec-title">학생별 합계 <span class="hint">(지각합계 = 환급 차감 기준 횟수)</span></div>
+      <div class="sec-title">학생별 합계 <span class="hint">(지각합계 = 환급 차감 기준 횟수 · 유예 ${grace}분 적용)</span></div>
       <div class="card gridwrap"><table>
         <thead><tr><th>학생</th><th>클래스</th><th>오전지각</th><th>점심후지각</th><th>지각합계</th><th>미등원</th></tr></thead>
         <tbody>${totalRows||'<tr><td colspan="6" class="empty">해당 기간 지각 없음</td></tr>'}</tbody></table></div>
@@ -556,7 +586,33 @@ async function renderLate(view){
         <tbody>${detailRows||'<tr><td colspan="4" class="empty">상세 내역 없음</td></tr>'}</tbody></table></div>`;
   };
   document.getElementById('l_go').onclick=run;
+  document.getElementById('l_copy').onclick=async()=>{
+    const text = lateReportText(last);
+    try{ await navigator.clipboard.writeText(text); toast('보고용 텍스트 복사됨'); }
+    catch(e){
+      const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove(); toast('복사됨');
+    }
+  };
   run();
+}
+
+function lateReportText(last){
+  const byStu = {};
+  (last.detail||[]).forEach(d=>{
+    const arr = byStu[d.이름] = byStu[d.이름] || [];
+    const p = String(d.날짜).split('-'); const md = (+p[1])+'/'+(+p[2]);
+    if(d.오전지각) arr.push(`${md} 오전 ${d.오전등원시각}`);
+    if(d.점심후지각) arr.push(`${md} 점심후 ${d.점심후등원시각}`);
+  });
+  const lines = [`[헤일리 ${state.term}스쿨 지각 현황] ${last.from} ~ ${last.to} (유예 ${last.grace}분)`,''];
+  const totals = (last.totals||[]).filter(t=>t.지각합계>0);
+  if(!totals.length){ lines.push('해당 기간 지각 없음'); return lines.join('\n'); }
+  totals.forEach(t=>{
+    const items = byStu[t.이름]||[];
+    lines.push(`${t.이름} (${t.지각합계}회): ${items.join(', ')}`);
+  });
+  return lines.join('\n');
 }
 
 /* ================= 설정 · 명단 ================= */
